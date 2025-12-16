@@ -1,1 +1,72 @@
-index.html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>FNAF 3D Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+    #menu {
+      position: fixed;
+      inset: 0;
+      background: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial;
+      z-index: 10;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>FNAF 3D</h1>
+  <button onclick="start()">Começar</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+
+<script>
+let scene, camera, renderer;
+
+function start(){
+  document.getElementById("menu").style.display = "none";
+
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  const light = new THREE.PointLight(0xffffff, 1);
+  light.position.set(0,5,5);
+  scene.add(light);
+
+  const floor = new THREE.Mesh(
+    new THREE.BoxGeometry(20,1,20),
+    new THREE.MeshStandardMaterial({color: 0x333333})
+  );
+  floor.position.y = -1;
+  scene.add(floor);
+
+  camera.position.z = 5;
+
+  animate();
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+</script>
+
+</body>
+</html>
