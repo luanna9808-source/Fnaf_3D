@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>FNAF 3D</title>
+<style>
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
+button {
+  padding:15px 30px;
+  font-size:18px;
+  margin:10px;
+  cursor:pointer;
+}
+#menu {
+  position:fixed;
+  inset:0;
+  background:black;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:white;
+  z-index:10;
+}
+#inventory {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.8);
+  padding:10px;
+  display:none;
+  border:2px solid white;
+}
+.item {
+  color:white;
+  border:1px solid white;
+  padding:8px;
+  cursor:pointer;
+}
+#hud {
+  position:fixed;
+  top:10px;
+  left:10px;
+  color:white;
+}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu">
+  <h1>Five Nights at Freddy's 3D</h1>
+  <button onclick="startGame(false)">Começar</button>
+  <button onclick="startGame(true)">Continuar</button>
+</div>
+
+<div id="hud">WASD andar | Mouse olhar | E inventário | F lanterna</div>
+
+<div id="inventory">
+  <div class="item" onclick="equipFlashlight()">🔦 Lanterna</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/PointerLockControls.js"></script>
+
+<script>
+let scene, camera, renderer, controls;
+let keys = {};
+let flashlight, flashlightEquipped = false;
+
+function startGame(load){
+  document.getElementById("menu").style.display="none";
+  init(load);
+}
+
+function init(load){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  controls = new THREE.PointerLockControls(camera, document.body);
+  document.body.addEventListener('click', ()=>controls.lock());
+  scene.add(controls.getObject());
+
+  scene.add(new THREE.AmbientLight(0x222222));
+
+  flashlight = new THREE.SpotLight(0xffffff, 2, 25, Math.PI/6);
+  flashlight.visible = false;
+  camera.add(flashlight);
+  camera.add(flashlight.target);
+  scene.add(camera);
+
+  if(load && localStorage.pos){
+    let p = JSON.parse(localStorage.pos);
+    controls.getObject().position.set(p.x,p.y,p.z);
+  } else {
+    controls.getObject().position.set(0,1.6,10);
+  }
+
+  createMap();
+  animate();
+}
+
+// MAPA
+function createMap(){
+  let floor = new THREE.Mesh(
+    new THREE.BoxGeometry(50,1,50),
+    new THREE.MeshStandardMaterial({color:0x111111})
+  );
+  floor.position.y=-1;
+  scene.add(floor);
+
+  function wall(x,z,w,d){
+    let m = new THREE.Mesh(
+      new THREE.BoxGeometry(w,5,d),
+      new THREE.MeshStandardMaterial({color:0x222222})
+    );
+    m.position.set(x,1.5,z);
+    scene.add(m);
+  }
+
+  wall(0,-25,50,1); wall(0,25,50,1);
+  wall(-25,0,1,50); wall(25,0,1,50);
+
+  wall(0,0,10,1); wall(0,5,10,1);
+  wall(-5,2.5,1,10); wall(5,2.5,1,10);
+}
+
+// INVENTÁRIO
+document.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()] = true;
+
+  if(e.key==="e"){
+    let inv=document.getElementById("inventory");
+    inv.style.display=inv.style.display==="none"?"block":"none";
+  }
+  if(e.key==="f" && flashlightEquipped){
+    flashlight.visible=!flashlight.visible;
+  }
+});
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()] = false);
+
+function equipFlashlight(){
+  flashlightEquipped=true;
+  document.getElementById("inventory").style.display="none";
+}
+
+// LOOP
+function animate(){
+  requestAnimationFrame(animate);
+
+  let speed=0.08;
+  if(keys["w"]) controls.moveForward(speed);
+  if(keys["s"]) controls.moveForward(-speed);
+  if(keys["a"]) controls.moveRight(-speed);
+  if(keys["d"]) controls.moveRight(speed);
+
+  let p=controls.getObject().position;
+  localStorage.pos = JSON.stringify({x:p.x,y:p.y,z:p.z});
+
+  renderer.render(scene,camera);
+}
+</script>
+</body>
+</html>
